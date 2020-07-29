@@ -1,7 +1,7 @@
 ﻿@page "/insight"
 @using Newtonsoft.Json;
 @using System.Text.RegularExpressions;
-@layout EmptyRazor
+@layout EmptyPage
 
 <div style="text-align:center;">
     <h1>Latest mars weather</h1>
@@ -43,7 +43,7 @@
         <h4>Wind Data : </h4>
 
         <div>Avarage Wind Speed : @Math.Round(Convert.ToDecimal(_avWind), 2) @_windType[_windSel]</div>
-        <div>Fastest Wind Speed : @Math.Round(Convert.ToDecimal(_hiWind), 2)@_windType[_windSel]</div>
+        <div>Fastest Wind Speed : @Math.Round(Convert.ToDecimal(_hiWind), 2) @_windType[_windSel]</div>
         <div>Slowest Wind Speed : @Math.Round(Convert.ToDecimal(_loWind), 2) @_windType[_windSel]</div>
 
     </div>
@@ -55,6 +55,16 @@
         <div>Lowest  Pressure : @_loPress Pa</div>
 
     </div>
+</div>
+<hr style="background-color:#000000;"/>
+<div class="about">
+    <h3 class="about" >About</h3>
+    <hr style="background-color:#000000;"/>
+    <p>
+        Insight is a Mars lander. It was launched  on 5 May 2018. Its  objective was to place SEIS (seismometer) to measure seismic activity, and HP3(heat probe) to measure heat flow of the planet. The planned mission duration is 709 sols (mars solar days) or 728 days.
+        The data may NOT be actual, it may sometimes take some time to get new data. Sol is approximately 24 hours, 39 minutes and 35 seconds long.
+    </p>
+    
 </div>
 
 @code {

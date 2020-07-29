@@ -202,11 +202,11 @@ app {
 
 
 .insightPhoto{
-    margin-right:50px;
+    margin-right:45px;
     float:right;
     
-    height: 595px;
-    width: 600px;
+    height: 625px;
+    width: 770px;
 }
 
 .dataStyle {
@@ -240,4 +240,15 @@ app {
 .convertHelp{
     width: 500px;
     margin: 0px 900px 10px 0px;
+}
+h1:first-child{
+    text-transform:capitalize;
+}
+
+.about {
+    font-family:Roboto;
+}
+.about:first-child{
+    margin-top:10px;
+    margin-left:200px;
 }
