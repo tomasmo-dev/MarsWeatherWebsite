@@ -1,0 +1,238 @@
+﻿@page "/insight"
+@using Newtonsoft.Json;
+@using System.Text.RegularExpressions;
+@layout EmptyRazor
+
+<div style="text-align:center;">
+    <h1>Latest mars weather</h1>
+    <h5 class="convertHelp">Unit conversion</h5>
+    <div class="insightPhoto">
+        <img class="insightPhoto" src="/Images/inSight-sol10.jpg" />
+    </div>
+    <div class="convertOr">
+
+
+        <select class="form-control" id="Selection" @bind="_TempType">
+            <option @onclick="TempTypeCheck" value="@_TempTypes.F">Farenheit</option>
+            <option @onclick="TempTypeCheck" value="@_TempTypes.C">Celsius</option>
+        </select>
+        
+        <select class="form-control" @bind="_windSel">
+            <option @onclick="WindTypeCheck" value="0">Meters per second</option>
+            <option @onclick="WindTypeCheck" value="1">Kilometers per hour</option>
+        </select>
+    </div>
+
+</div>
+
+<div>
+    <div class="dataStyle">
+        <p>Data from : @_WeatherAgeStart to @_WeatherAgeEnd</p>
+        <div>Sol : @_LatestSol</div>
+        <div>Season : @_season</div>
+    </div>
+
+    <div class="dataStyle">
+        <h4>Temperature Data : </h4>
+        <div>Average temperature : @Math.Round(Convert.ToDecimal(_avTemp), 2) °@_TempType.ToString()</div>
+        <div>Highest temperature : @Math.Round(Convert.ToDecimal(_hiTemp), 2) °@_TempType.ToString()</div>
+        <div>Lowest  temperature : @Math.Round(Convert.ToDecimal(_loTemp), 2) °@_TempType.ToString()</div>
+    </div>
+
+    <div class="dataStyle">
+        <h4>Wind Data : </h4>
+
+        <div>Avarage Wind Speed : @Math.Round(Convert.ToDecimal(_avWind), 2) @_windType[_windSel]</div>
+        <div>Fastest Wind Speed : @Math.Round(Convert.ToDecimal(_hiWind), 2)@_windType[_windSel]</div>
+        <div>Slowest Wind Speed : @Math.Round(Convert.ToDecimal(_loWind), 2) @_windType[_windSel]</div>
+
+    </div>
+    <div class="dataStyle">
+        <h4>Pressure Data : </h4>
+
+        <div>Avarage Pressure : @_avPress Pa</div>
+        <div>Highest Pressure : @_hiPress Pa</div>
+        <div>Lowest  Pressure : @_loPress Pa</div>
+
+    </div>
+</div>
+
+@code {
+
+    private System.Net.WebClient _client;
+
+    protected bool _isC { get; set; } = false;
+    protected bool _isF { get; set; } = true;
+
+    protected bool _isMPS { get; set; } = true;
+    protected bool _isKMPH { get; set; } = false;
+
+    protected string _WeatherAgeStart { get; set; }
+    protected string _WeatherAgeEnd { get; set; }
+
+    protected string _season { get; set; }
+
+    protected string _avTemp { get; set; }
+    protected string _hiTemp { get; set; }
+    protected string _loTemp { get; set; }
+
+    protected string _avWind { get; set; }
+    protected string _hiWind { get; set; }
+    protected string _loWind { get; set; }
+
+    protected string _avPress { get; set; }
+    protected string _hiPress { get; set; }
+    protected string _loPress { get; set; }
+
+    protected enum _TempTypes { F, C };
+    protected _TempTypes _TempType { get; set; } = _TempTypes.F;
+
+    protected string[] _windType { get; set; } = { "m/s", "km/h" };
+    protected int _windSel { get; set; } = 0;
+
+    protected Newtonsoft.Json.Linq.JToken[] _sol_keys { get; set; }
+
+    protected string _LatestSol { get; set; }
+    protected Newtonsoft.Json.Linq.JToken[] _Weather { get; set; }
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+
+        _client = new System.Net.WebClient();
+        LoadData();
+    }
+
+    private void LoadData()
+    {
+        string data = _client.DownloadString("https://api.nasa.gov/insight_weather/?api_key=MatqEaBKimdNrWH76g1SykjPbfmdTpOUFmyHsjfg&feedtype=json");
+
+        Newtonsoft.Json.Linq.JObject cData = Newtonsoft.Json.Linq.JObject.Parse(data);
+
+        if (cData.GetValue("sol_keys").ToString() != 0.ToString())
+        {
+            _sol_keys = cData["sol_keys"].ToArray();
+            int _solLength = _sol_keys.Length;
+
+            _LatestSol = _sol_keys[_solLength - 1].ToString();
+
+            _WeatherAgeStart = cData[_LatestSol]["First_UTC"].ToString();
+            _WeatherAgeEnd = cData[_LatestSol]["Last_UTC"].ToString();
+
+            _avTemp = cData[_LatestSol]["AT"]["av"].ToString();
+            _hiTemp = cData[_LatestSol]["AT"]["mx"].ToString();
+            _loTemp = cData[_LatestSol]["AT"]["mn"].ToString();
+
+            _avWind = cData[_LatestSol]["HWS"]["av"].ToString();
+            _hiWind = cData[_LatestSol]["HWS"]["mx"].ToString();
+            _loWind = cData[_LatestSol]["HWS"]["mn"].ToString();
+
+            _avPress = cData[_LatestSol]["PRE"]["av"].ToString();
+            _hiPress = cData[_LatestSol]["PRE"]["mx"].ToString();
+            _loPress = cData[_LatestSol]["PRE"]["mn"].ToString();
+
+            _season = cData[_LatestSol]["Season"].ToString();
+
+        }
+        else
+        {
+
+        }
+
+    }
+
+    private void WindTypeCheck()
+    {
+        if (_windSel == 0)
+        {
+            mps();
+            StateHasChanged();
+        }
+        if (_windSel == 1)
+        {
+            kmph();
+            StateHasChanged();
+        }
+    }
+
+    private void mps()
+    {
+        if (_isMPS != true)
+        {
+            _avWind = Convert.ToString((Convert.ToDecimal(_avWind) * 5) / 18);
+            _hiWind = Convert.ToString((Convert.ToDecimal(_hiWind) * 5) / 18);
+            _loWind = Convert.ToString((Convert.ToDecimal(_loWind) * 5) / 18);
+            _isKMPH = false;
+            _isMPS = true;
+        }
+        else
+        {
+
+        }
+    }
+    private void kmph()
+    {
+        if (_isKMPH != true)
+        {
+            _avWind = Convert.ToString((Convert.ToDecimal(_avWind) * 18) / 5);
+            _hiWind = Convert.ToString((Convert.ToDecimal(_hiWind) * 18) / 5);
+            _loWind = Convert.ToString((Convert.ToDecimal(_loWind) * 18) / 5);
+            _isKMPH = true;
+            _isMPS = false;
+        }
+        else
+        {
+
+        }
+    }
+
+    private void TempTypeCheck()
+    {
+        if (_TempType.ToString() == "F")
+        {
+            Farenheit();
+            StateHasChanged();
+        }
+        if (_TempType.ToString() == "C")
+        {
+            Celsius();
+            StateHasChanged();
+        }
+    }
+
+    private void Farenheit()
+    {
+        if (_isF != true)
+        {
+            _avTemp = Convert.ToString((Convert.ToDecimal(_avTemp) * 9) / 5 + 32);
+            _hiTemp = Convert.ToString((Convert.ToDecimal(_hiTemp) * 9) / 5 + 32);
+            _loTemp = Convert.ToString((Convert.ToDecimal(_loTemp) * 9) / 5 + 32);
+            _isC = false;
+            _isF = true;
+        }
+        else
+        {
+
+        }
+    }
+    private void Celsius()
+    {
+        if (_isC != true)
+        {
+
+            _avTemp = Convert.ToString((Convert.ToDecimal(_avTemp) - 32) * 5 / 9);
+            _hiTemp = Convert.ToString((Convert.ToDecimal(_hiTemp) - 32) * 5 / 9);
+            _loTemp = Convert.ToString((Convert.ToDecimal(_loTemp) - 32) * 5 / 9);
+            _isF = false;
+            _isC = true;
+
+        }
+        else
+        {
+
+        }
+
+    }
+
+
+}
